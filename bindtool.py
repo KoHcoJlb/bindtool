@@ -56,8 +56,6 @@ import subprocess
 import sys
 import unicodedata
 
-import DNS
-
 
 class BindToolError(Exception):
     pass
@@ -466,14 +464,7 @@ class BindTool(object):
         if (not params['admin'].endswith('.')):
             params['admin'] += '.'
 
-        master_server = params['master_server'] if (params['master_server']) else params['primary_server']
-        try:
-            response = DNS.Request().req(server=master_server, name=zone_name, qtype='SOA')
-            existing_serial = response.answers[0]['data'][2][1] if (response and ('NOERROR' == response.header['status'])) else 0
-            self._debug('Found serial number ', existing_serial, '\n')
-        except Exception as error:
-            self._error('Unable to perform DNS SOA query\n', error, '\n')
-        serial = max(int(datetime.datetime.now().strftime('%Y%m%d00')), existing_serial + 1)
+        serial = int(datetime.datetime.now().strftime('%Y%m%d00'))
         self._debug('Using serial number ', serial, '\n')
 
         return '@{ttl}\tSOA\t{primary_server} {admin} {serial} {refresh} {retry} {expire} {minimum}\n'.format(serial=serial, **params)
